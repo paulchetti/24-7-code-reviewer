@@ -43,39 +43,39 @@ export const IssuesList: React.FC<IssuesListProps> = ({ review }) => {
     <div className="glass-panel rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
       {/* Tab Header */}
       <div className="bg-slate-900/90 px-6 py-3 border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1.5 overflow-x-auto flex-1">
           <button
             onClick={() => setActiveTab('bugs')}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === 'bugs'
                 ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <AlertOctagon className="w-4 h-4" />
-            <span>Detected Defects ({review.detected_bugs.length})</span>
+            <AlertOctagon className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Defects ({review.detected_bugs.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('architecture')}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === 'architecture'
                 ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Layers className="w-4 h-4" />
-            <span>Architectural Guidance ({review.architectural_guidance.length})</span>
+            <Layers className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Architecture ({review.architectural_guidance.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('performance')}
-            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
               activeTab === 'performance'
                 ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
                 : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            <Zap className="w-4 h-4" />
-            <span>Performance Insights ({review.performance_insights.length})</span>
+            <Zap className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Performance ({review.performance_insights.length})</span>
           </button>
         </div>
 
