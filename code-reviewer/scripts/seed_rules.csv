@@ -1,0 +1,16 @@
+id,type,description
+1,formatting,Avoid single-character variable names outside of trivial loop counters
+2,performance,Cache repeated database lookups and expensive calculations
+3,security,Never interpolate raw user input directly into SQL queries; always use parameterized queries
+4,security,Never commit hardcoded secrets API tokens or credentials into source code
+5,security,Sanitize and escape all user-controlled data before rendering into HTML to prevent Cross-Site Scripting (XSS)
+6,performance,Avoid N+1 queries in ORMs by utilizing eager loading or batch fetch queries
+7,correctness,Always check for and handle null or undefined or nil pointers before dereferencing
+8,correctness,Ensure mutexes and locks are released using defer or finally blocks to prevent deadlocks
+9,architecture,Enforce single responsibility: separate HTTP handlers business logic and persistence layers
+10,maintainability,Define explicit return types and parameter types for all public interfaces and functions
+11,performance,Use buffered I/O streams and avoid reading entire large files directly into memory
+12,security,Verify JWT signatures with asymmetric keys and enforce short-lived expiration timestamps
+13,correctness,Handle floating-point arithmetic using arbitrary precision decimals for monetary values
+14,architecture,Avoid global mutable state; prefer explicit dependency injection
+15,security,Validate and constrain all array indices and slice bounds to prevent buffer overflows and panics
