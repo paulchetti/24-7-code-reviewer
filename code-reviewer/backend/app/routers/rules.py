@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from pydantic import BaseModel
 
 from app.auth import get_current_user
@@ -21,29 +21,36 @@ class DirectRuleTextRequest(BaseModel):
     summary="Ingest historical engineering guidelines via CSV upload",
 )
 async def upload_rules_csv(
-    file: Optional[UploadFile] = File(None),
-    payload: Optional[DirectRuleTextRequest] = None,
+    request: Request,
     current_user: dict = Depends(get_current_user),
 ):
     """Upload CSV containing rules with schema: <id>, <type>, <description>.
+    Supports both multipart form-data file uploads and JSON { "csv_content": "..." } payloads.
     Generates Vertex AI text-embedding-004 vectors and stores them in Cloud Firestore.
     """
     content = ""
-    if file:
-        try:
-            raw_bytes = await file.read()
+    content_type = request.headers.get("content-type", "")
+
+    if "multipart/form-data" in content_type:
+        form = await request.form()
+        uploaded_file = form.get("file")
+        if uploaded_file and hasattr(uploaded_file, "read"):
+            raw_bytes = await uploaded_file.read()
             content = raw_bytes.decode("utf-8")
-        except Exception as e:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Could not read uploaded CSV file: {str(e)}",
-            )
-    elif payload and payload.csv_content:
-        content = payload.csv_content
+        elif form.get("csv_content"):
+            content = str(form.get("csv_content"))
     else:
+        try:
+            body = await request.json()
+            content = body.get("csv_content", "")
+        except Exception:
+            raw_bytes = await request.body()
+            content = raw_bytes.decode("utf-8")
+
+    if not content.strip():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Either a multipart CSV file or 'csv_content' JSON payload is required.",
+            detail="Either a multipart CSV file or 'csv_content' body is required.",
         )
 
     try:
