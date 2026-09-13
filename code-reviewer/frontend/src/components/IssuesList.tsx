@@ -41,52 +41,64 @@ export const IssuesList: React.FC<IssuesListProps> = ({ review }) => {
 
   return (
     <div className="glass-panel rounded-2xl border border-slate-800 shadow-xl overflow-hidden">
-      {/* Tab Header */}
-      <div className="bg-slate-900/90 px-6 py-3 border-b border-slate-800 flex items-center justify-between">
-        <div className="flex items-center space-x-1.5 overflow-x-auto flex-1">
+      {/* Tab Header - 3-Column Segmented Control */}
+      <div className="bg-slate-900/95 p-3 border-b border-slate-800">
+        <div className="grid grid-cols-3 gap-1.5 bg-slate-950/70 p-1 rounded-xl border border-slate-800/80">
           <button
             onClick={() => setActiveTab('bugs')}
-            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center space-x-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'bugs'
-                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
             }`}
           >
             <AlertOctagon className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Defects ({review.detected_bugs.length})</span>
+            <span className="truncate">Defects ({review.detected_bugs.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('architecture')}
-            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center space-x-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'architecture'
-                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
             }`}
           >
             <Layers className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Architecture ({review.architectural_guidance.length})</span>
+            <span className="truncate">Architecture ({review.architectural_guidance.length})</span>
           </button>
           <button
             onClick={() => setActiveTab('performance')}
-            className={`flex items-center space-x-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+            className={`flex items-center justify-center space-x-1.5 py-2 px-2 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'performance'
-                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/30'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/30'
             }`}
           >
             <Zap className="w-3.5 h-3.5 flex-shrink-0" />
-            <span>Performance ({review.performance_insights.length})</span>
+            <span className="truncate">Performance ({review.performance_insights.length})</span>
           </button>
         </div>
-
-        {/* Historical Rules Cited Badge */}
-        {review.applied_historical_rule_ids && review.applied_historical_rule_ids.length > 0 && (
-          <div className="hidden sm:flex items-center space-x-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-xs">
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Applied Rules: {review.applied_historical_rule_ids.join(', ')}</span>
-          </div>
-        )}
       </div>
+
+      {/* Historical Rules Cited Grounding Sub-Bar */}
+      {review.applied_historical_rule_ids && review.applied_historical_rule_ids.length > 0 && (
+        <div className="px-4 py-2.5 bg-emerald-950/20 border-b border-emerald-900/30 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center space-x-1.5 text-emerald-400 font-semibold text-[11px]">
+            <BookOpen className="w-3.5 h-3.5 flex-shrink-0" />
+            <span>Historical Guidelines Applied:</span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {review.applied_historical_rule_ids.map((id) => (
+              <span
+                key={id}
+                className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-mono text-[11px] font-bold shadow-sm"
+              >
+                Rule #{id}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Tab Content */}
       <div className="p-6">
@@ -110,31 +122,37 @@ export const IssuesList: React.FC<IssuesListProps> = ({ review }) => {
                   >
                     <div
                       onClick={() => setExpandedIssue(isExpanded ? null : issue.id)}
-                      className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-800/40 transition-colors"
+                      className="p-3.5 flex items-start justify-between cursor-pointer hover:bg-slate-800/40 transition-colors gap-3"
                     >
-                      <div className="flex items-center space-x-3">
-                        {getSeverityIcon(issue.severity)}
-                        <div className="flex items-center space-x-2">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${getSeverityBadge(
-                              issue.severity
-                            )}`}
-                          >
-                            {issue.severity}
-                          </span>
-                          <span className="text-xs font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                            {issue.category}
-                          </span>
-                          {issue.line_number && (
-                            <span className="text-xs font-mono text-indigo-400 font-semibold">
-                              Line {issue.line_number}
+                      <div className="flex items-start space-x-2.5 min-w-0 flex-1">
+                        <div className="mt-0.5 flex-shrink-0">
+                          {getSeverityIcon(issue.severity)}
+                        </div>
+                        <div className="space-y-1 min-w-0 flex-1">
+                          <div className="flex items-center flex-wrap gap-1.5">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold border ${getSeverityBadge(
+                                issue.severity
+                              )}`}
+                            >
+                              {issue.severity}
                             </span>
-                          )}
-                          <span className="text-xs font-bold text-slate-200">{issue.title}</span>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300">
+                              {issue.category}
+                            </span>
+                            {issue.line_number && (
+                              <span className="text-[10px] font-mono text-indigo-400 font-semibold">
+                                Line {issue.line_number}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-xs font-bold text-slate-200 leading-snug">
+                            {issue.title}
+                          </div>
                         </div>
                       </div>
 
-                      <div className="text-slate-500">
+                      <div className="text-slate-500 mt-1 flex-shrink-0">
                         {isExpanded ? (
                           <ChevronDown className="w-4 h-4" />
                         ) : (
