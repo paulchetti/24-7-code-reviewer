@@ -207,7 +207,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       </div>
 
       {/* Monaco Editor Container */}
-      <div className="flex-1 min-h-[420px] relative">
+      <div className="h-[420px] relative">
         <Editor
           height="100%"
           language={language === 'cpp' ? 'cpp' : language}

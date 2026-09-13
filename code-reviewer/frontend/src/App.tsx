@@ -8,7 +8,7 @@ import { GrowthChart } from './components/GrowthChart';
 import { ReviewHistory } from './components/ReviewHistory';
 import { DEMO_USER, AuthUserState } from './lib/firebase';
 import { submitCodeReview, checkBackendHealth, ReviewResult } from './lib/api';
-import { Sparkles, AlertCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, AlertCircle, ShieldCheck, Bug, Zap, PenTool, Database } from 'lucide-react';
 
 const INITIAL_PYTHON_CODE = `import sqlite3
 
@@ -97,17 +97,17 @@ export function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-5">
         {/* Error Toast */}
         {errorMessage && (
-          <div className="mb-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
+          <div className="mb-4 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 text-rose-400" />
+              <AlertCircle className="w-4 h-4 text-rose-400 flex-shrink-0" />
               <span>{errorMessage}</span>
             </div>
             <button
               onClick={() => setErrorMessage(null)}
-              className="text-slate-400 hover:text-slate-200 text-sm font-bold"
+              className="text-slate-400 hover:text-slate-200 text-sm font-bold ml-2"
             >
               ×
             </button>
@@ -116,44 +116,104 @@ export function App() {
 
         {/* Tab 1: Code Reviewer */}
         {activeTab === 'reviewer' && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              {/* Code Editor Panel */}
-              <div className={currentReview ? 'lg:col-span-6' : 'lg:col-span-12'}>
-                <CodeEditor
-                  code={code}
-                  setCode={setCode}
-                  language={language}
-                  setLanguage={setLanguage}
-                  contextDesc={contextDesc}
-                  setContextDesc={setContextDesc}
-                  onReview={handleReview}
-                  isLoading={isLoading}
-                />
-              </div>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+            {/* Left: Code Editor Panel */}
+            <div className="lg:col-span-7">
+              <CodeEditor
+                code={code}
+                setCode={setCode}
+                language={language}
+                setLanguage={setLanguage}
+                contextDesc={contextDesc}
+                setContextDesc={setContextDesc}
+                onReview={handleReview}
+                isLoading={isLoading}
+              />
+            </div>
 
-              {/* Review Results Panel */}
-              {currentReview && (
-                <div className="lg:col-span-6 space-y-6">
+            {/* Right: Results or Standby Rubric Guide */}
+            <div className="lg:col-span-5 space-y-5">
+              {currentReview ? (
+                <>
                   <ScoreCard
                     scores={currentReview.quality_scores}
                     summary={currentReview.summary}
                   />
                   <IssuesList review={currentReview} />
+                </>
+              ) : (
+                <div className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-5 shadow-xl">
+                  <div className="flex items-center space-x-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-white">Review Engine Standby</h3>
+                      <p className="text-[11px] text-slate-400">
+                        Powered by Vertex AI Gemini & grounded vector embeddings
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider font-mono">
+                      Weighted 1–10 Quality Rubric
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-200">
+                          <Bug className="w-3.5 h-3.5 text-rose-400" />
+                          <span>Correctness</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">30% Weight</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-200">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Security</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">30% Weight</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-200">
+                          <Zap className="w-3.5 h-3.5 text-amber-400" />
+                          <span>Performance</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">20% Weight</div>
+                      </div>
+                      <div className="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800">
+                        <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-200">
+                          <PenTool className="w-3.5 h-3.5 text-indigo-400" />
+                          <span>Maintainability</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">20% Weight</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-indigo-500/5 border border-indigo-500/20 space-y-1.5">
+                    <div className="flex items-center space-x-1.5 text-xs font-semibold text-indigo-300">
+                      <Database className="w-3.5 h-3.5" />
+                      <span>Historical Rules Grounding</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 leading-relaxed">
+                      Prior to review, the code is matched against organizational rules via Vertex AI <code className="text-emerald-400 font-mono">text-embedding-004</code>. Violated rules are cited directly in the results.
+                    </p>
+                  </div>
+
+                  <div className="text-center pt-1">
+                    <button
+                      onClick={handleReview}
+                      disabled={isLoading || !code.trim()}
+                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 hover:from-indigo-500 hover:to-emerald-400 text-white shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center space-x-2"
+                    >
+                      <Sparkles className="w-4 h-4 text-emerald-300" />
+                      <span>Analyze Code Snippet</span>
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
-
-            {/* Prompt to run review if no review result yet */}
-            {!currentReview && (
-              <div className="glass-panel p-6 rounded-2xl border border-slate-800 text-center space-y-3">
-                <Sparkles className="w-8 h-8 text-emerald-400 mx-auto" />
-                <h3 className="text-base font-bold text-white">Ready for Multi-Language Analysis</h3>
-                <p className="text-xs text-slate-400 max-w-xl mx-auto">
-                  Select a language (Python, JavaScript, TypeScript, Go, Java, C++, or Rust), paste your code or choose a test snippet above, and click <strong>Run Intelligent Review</strong> to trigger Vertex AI Gemini analysis with grounded historical rule retrieval.
-                </p>
-              </div>
-            )}
           </div>
         )}
 
@@ -170,7 +230,7 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="glass-panel border-t border-slate-800/80 py-4 text-center text-xs text-slate-500 font-mono">
+      <footer className="glass-panel border-t border-slate-800/80 py-3 text-center text-[11px] text-slate-500 font-mono">
         The 24/7 Intelligent Code Reviewer • Code Kitchen Track 01 • Powered by Google Cloud Platform
       </footer>
     </div>
