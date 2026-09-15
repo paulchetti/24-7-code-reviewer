@@ -9,6 +9,7 @@ import { ReviewHistory } from './components/ReviewHistory';
 import { DEMO_USER, AuthUserState } from './lib/firebase';
 import { submitCodeReview, checkBackendHealth, ReviewResult } from './lib/api';
 import { Sparkles, AlertCircle, ShieldCheck, Bug, Zap, PenTool, Database } from 'lucide-react';
+import hljs from 'highlight.js';
 
 const INITIAL_PYTHON_CODE = `import sqlite3
 
@@ -34,7 +35,7 @@ export function App() {
 
   // Editor and Review state
   const [code, setCode] = useState<string>(INITIAL_PYTHON_CODE);
-  const [language, setLanguage] = useState<string>('python');
+  const [language, setLanguage] = useState<string>('auto');
   const [contextDesc, setContextDesc] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [currentReview, setCurrentReview] = useState<ReviewResult | null>(null);
@@ -60,11 +61,18 @@ export function App() {
   const handleReview = async () => {
     setIsLoading(true);
     setErrorMessage(null);
+    
+    let actualLang = language;
+    if (language === 'auto') {
+      const res = hljs.highlightAuto(code, ['python', 'javascript', 'typescript', 'go', 'java', 'cpp', 'rust']);
+      actualLang = res.language || 'python';
+    }
+
     try {
       const result = await submitCodeReview(
         {
           code,
-          language,
+          language: actualLang,
           context_description: contextDesc,
           top_k_rules: 5,
         },

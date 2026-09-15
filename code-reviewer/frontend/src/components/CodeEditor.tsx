@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
 import { Play, Sparkles, Code2, RotateCcw, FileCode, Check } from 'lucide-react';
+import hljs from 'highlight.js';
 
 interface CodeEditorProps {
   code: string;
@@ -14,6 +15,7 @@ interface CodeEditorProps {
 }
 
 const LANGUAGES = [
+  { id: 'auto', label: 'Auto Detect' },
   { id: 'python', label: 'Python' },
   { id: 'javascript', label: 'JavaScript' },
   { id: 'typescript', label: 'TypeScript' },
@@ -122,6 +124,14 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
 }) => {
   const [selectedPreset, setSelectedPreset] = useState<string>('');
 
+  // Auto-detect language using highlight.js if set to 'auto'
+  const resolvedLanguage = React.useMemo(() => {
+    if (language !== 'auto') return language;
+    if (!code.trim()) return 'python'; // fallback
+    const result = hljs.highlightAuto(code, ['python', 'javascript', 'typescript', 'go', 'java', 'cpp', 'rust']);
+    return result.language || 'python';
+  }, [code, language]);
+
   const handleApplyPreset = (presetName: string) => {
     const preset = CODE_PRESETS.find((p) => p.name === presetName);
     if (preset) {
@@ -210,7 +220,7 @@ export const CodeEditor: React.FC<CodeEditorProps> = ({
       <div className="h-[420px] relative">
         <Editor
           height="100%"
-          language={language === 'cpp' ? 'cpp' : language}
+          language={resolvedLanguage === 'cpp' ? 'cpp' : resolvedLanguage}
           value={code}
           onChange={(val) => setCode(val || '')}
           theme="vs-dark"

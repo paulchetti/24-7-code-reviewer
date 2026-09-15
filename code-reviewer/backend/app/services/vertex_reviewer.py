@@ -103,53 +103,131 @@ Perform the comprehensive review now and produce the structured JSON output.
         """Generate a realistic, deterministic mock review for offline tests and non-GCP environments."""
         code = request.code
         code_lower = code.lower()
+        lines = code.split("\n")
 
         # Heuristic detection for realistic mock feedback
         detected_bugs = []
         applied_rules = []
 
-        # Check for common vulnerabilities
+        # 1. Security Heuristics
         if "select" in code_lower and ("%" in code or "+" in code or "f\"" in code or "f'" in code or "$" in code):
             detected_bugs.append({
-                "id": "ISSUE-1",
-                "line_number": 2,
+                "id": "SEC-01",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "select" in l.lower()), 1),
                 "severity": "CRITICAL",
                 "category": "security",
                 "title": "SQL Injection Risk via String Formatting",
                 "description": "Raw user input is concatenated directly into a SQL query string without parameterization.",
                 "suggestion": "Use parameterized queries or prepared statements provided by your database driver.",
-                "code_sample": "cursor.execute('SELECT * FROM users WHERE id = %s', (user_id,))"
             })
-            # Check if SEC-001 or rule 3 is in matched rules
-            for m in matched_rules:
-                if "sql" in m.rule.description.lower() or m.rule.type == "security":
-                    applied_rules.append(m.rule.id)
 
         if "password" in code_lower and ("=" in code or ":" in code):
             detected_bugs.append({
-                "id": "ISSUE-2",
-                "line_number": 1,
+                "id": "SEC-02",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "password" in l.lower()), 1),
                 "severity": "HIGH",
                 "category": "security",
                 "title": "Hardcoded Credential or Sensitive Token",
                 "description": "Plaintext secret or password found in source code snippet.",
-                "suggestion": "Extract secrets into environment variables or use Google Cloud Secret Manager.",
-                "code_sample": "import os\napi_key = os.environ['API_KEY']"
+                "suggestion": "Extract secrets into environment variables or use a Secret Manager.",
+            })
+            
+        if "eval(" in code:
+            detected_bugs.append({
+                "id": "SEC-03",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "eval(" in l), 1),
+                "severity": "CRITICAL",
+                "category": "security",
+                "title": "Dangerous use of eval()",
+                "description": "Executing arbitrary code via eval() can lead to remote code execution.",
+                "suggestion": "Avoid eval(). Use safer alternatives like ast.literal_eval() or specific parsers.",
             })
 
-        if len(code.split("\n")) > 1 and ("for " in code or "while " in code):
-            for m in matched_rules:
-                if m.rule.type == "performance":
-                    applied_rules.append(m.rule.id)
+        # 2. Correctness Heuristics
+        if "except Exception" in code or "catch (e)" in code_lower or "catch(e)" in code_lower:
+            detected_bugs.append({
+                "id": "COR-01",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "except exception" in l.lower() or "catch" in l.lower()), 1),
+                "severity": "MEDIUM",
+                "category": "correctness",
+                "title": "Overly Broad Exception Catch",
+                "description": "Catching generic exceptions can mask underlying bugs and make debugging difficult.",
+                "suggestion": "Catch specific exceptions instead of the base Exception class.",
+            })
 
-        # Baseline scores
-        has_critical = any(b["severity"] == "CRITICAL" for b in detected_bugs)
-        has_high = any(b["severity"] == "HIGH" for b in detected_bugs)
+        # 3. Performance Heuristics
+        nested_loops = sum(1 for line in lines if "for " in line or "while " in line)
+        if nested_loops >= 2:
+            detected_bugs.append({
+                "id": "PERF-01",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "for " in l or "while " in l), 1),
+                "severity": "MEDIUM",
+                "category": "performance",
+                "title": "Potential High Time Complexity",
+                "description": "Multiple loops detected. This could lead to O(N^2) or worse time complexity.",
+                "suggestion": "Review loop structures to see if caching, hash maps, or vectorized operations can optimize it.",
+            })
 
-        correctness = 5.0 if has_critical else 8.5
-        security = 2.5 if has_critical else (6.0 if has_high else 9.0)
-        performance = 7.5
-        maintainability = 8.0
+        if "print(" in code or "console.log" in code:
+            detected_bugs.append({
+                "id": "PERF-02",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "print(" in l or "console.log" in l), 1),
+                "severity": "LOW",
+                "category": "performance",
+                "title": "Synchronous I/O in Execution Path",
+                "description": "Print statements can cause blocking I/O which affects performance in production.",
+                "suggestion": "Use structured asynchronous logging frameworks instead.",
+            })
+
+        # Dynamic Scoring based on detected bugs and heuristics
+        correctness = 10.0
+        security = 10.0
+        performance = 10.0
+        maintainability = 10.0
+
+        # Deductions
+        for bug in detected_bugs:
+            sev = bug["severity"]
+            cat = bug["category"]
+            deduction = 4.0 if sev == "CRITICAL" else 2.5 if sev == "HIGH" else 1.5 if sev == "MEDIUM" else 0.5
+            
+            if cat == "security":
+                security -= deduction
+            elif cat == "correctness":
+                correctness -= deduction
+            elif cat == "performance":
+                performance -= deduction
+            else:
+                maintainability -= deduction
+
+        # Maintainability heuristics
+        if "TODO" in code or "FIXME" in code:
+            maintainability -= 1.0
+            detected_bugs.append({
+                "id": "MAINT-01",
+                "line_number": next((i+1 for i, l in enumerate(lines) if "TODO" in l or "FIXME" in l), 1),
+                "severity": "LOW",
+                "category": "maintainability",
+                "title": "Unresolved Developer Notes",
+                "description": "Found TODO/FIXME comments in code.",
+                "suggestion": "Resolve the task or track it in an issue tracker.",
+            })
+            
+        if len(lines) > 40:
+            maintainability -= 1.5
+            
+        # Reward good practices
+        if '"""' in code or "/**" in code or "///" in code or "# " in code:
+            maintainability += 1.5
+            
+        if "def " in code and "->" in code:
+            correctness += 1.0  # Type hints
+
+        # Clamp scores between 1.0 and 10.0
+        correctness = max(1.0, min(10.0, round(correctness, 1)))
+        security = max(1.0, min(10.0, round(security, 1)))
+        performance = max(1.0, min(10.0, round(performance, 1)))
+        maintainability = max(1.0, min(10.0, round(maintainability, 1)))
 
         return {
             "summary": f"Comprehensive code analysis for {request.language.value.upper()}. Found {len(detected_bugs)} issues requiring attention.",
@@ -162,7 +240,7 @@ Perform the comprehensive review now and produce the structured JSON output.
             "detected_bugs": detected_bugs,
             "architectural_guidance": [
                 "Separate business logic from external I/O and persistence layers.",
-                "Adopt structured logging and observability tracing with Google Cloud Trace."
+                "Adopt structured logging and observability tracing."
             ],
             "performance_insights": [
                 "Profile memory allocations under peak concurrency loads.",
